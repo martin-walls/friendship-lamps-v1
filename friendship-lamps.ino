@@ -77,13 +77,13 @@ WidgetBridge bridge(VPIN_SEND);
 void setup() {
     pinMode(13, OUTPUT);
 
-#ifdef ENABLE_FASTLED
+    #ifdef ENABLE_FASTLED
     FastLED.addLeds<LEDTYPE, LEDPIN, GRB>(leds, NUMLEDS);
     FastLED.setDither(0);
-#endif
-#ifdef ENABLE_SERIAL
+    #endif
+    #ifdef ENABLE_SERIAL
     Serial.begin(115200);
-#endif
+    #endif
 
     showStatusIndicator(CRGB(128, 0, 0));
 
@@ -94,7 +94,7 @@ void setup() {
 
     // wifiManager.resetSettings();
 
-    // tries to connect with configures ssid/password
+    // tries to connect with configured ssid/password
     // else starts AP with these ssid/password and awaits configuration
     if (!wifiManager.autoConnect(AP_SSID, AP_PASSWORD)) {
         delay(3000);
@@ -201,15 +201,15 @@ void loop() {
 }
 
 void showStatusIndicator(CRGB color) {
-#ifdef ENABLE_FASTLED
+    #ifdef ENABLE_FASTLED
     fill_solid(&leds[0], NUMLEDS, CRGB(0, 0, 0));
-#endif
+    #endif
 
     leds[NUMLEDS - 1] = color;
     leds[NUMLEDS - 2] = color;
-#ifdef ENABLE_FASTLED
+    #ifdef ENABLE_FASTLED
     FastLED.show();
-#endif
+    #endif
 }
 
 // this assumes soft pot is pulled HIGH when not pressed
@@ -253,9 +253,9 @@ void setRollingAvg(uint8_t value) {
 void readSoftPotTimerEvent() {
     // currentSoftPotHue = readSoftPot();
     uint16_t rawValue = analogRead(POTPIN);
-#ifdef ENABLE_SERIAL
+    #ifdef ENABLE_SERIAL
     Serial.println(rawValue);
-#endif
+    #endif
     if (rawValue < POT_HIGH_THRESH && rawValue > POT_LOW_THRESH) {
         // if (rawValue < SOFT_POT_MIN) {
         //     rawValue = SOFT_POT_MIN;
@@ -278,10 +278,10 @@ void readSoftPotTimerEvent() {
             // currentLedHue = inputBuffer[inputBufferPointer];
             currentLedHue = rollingAvg;
             targetHue = currentLedHue;
-#ifdef ENABLE_FASTLED
+            #ifdef ENABLE_FASTLED
             fill_solid(&leds[0], NUMLEDS, CHSV(currentLedHue, 255, 255));
             FastLED.show();
-#endif
+            #endif
         }
     }
 
@@ -293,11 +293,11 @@ void updateBrightnessFromPot() {
     uint16_t rawValue = analogRead(BRIGHTNESS_POT_PIN);
     uint8_t newBrightness = map(rawValue, 0, ADC_MAXVAL, MIN_BRIGHTNESS, 255);
     if (newBrightness != lastBrightness) {
-#ifdef ENABLE_FASTLED
+    #ifdef ENABLE_FASTLED
         FastLED.setBrightness(pgm_read_byte(&gammaVals[newBrightness]));
         lastBrightness = newBrightness;
         FastLED.show();
-#endif
+    #endif
     }
 }
 
@@ -320,10 +320,10 @@ void updateLedsOutput() {
         } else {
             currentLedHue++;
         }
-#ifdef ENABLE_FASTLED
+        #ifdef ENABLE_FASTLED
         fill_solid(&leds[0], NUMLEDS, CHSV(currentLedHue, 255, 255));
         FastLED.show();
-#endif
+        #endif
     }
 }
 
