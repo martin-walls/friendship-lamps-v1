@@ -1,5 +1,8 @@
+#define THING_INDEX_MINE 0
+#define THING_INDEX_SARAH 1
+
 // change this for each device
-#define THING_INDEX 0
+#define THING_INDEX THING_INDEX_MINE
 
 #define ENABLE_FASTLED
 // #define ENABLE_SERIAL
@@ -33,9 +36,9 @@
 
 // include the correct secrets file
 #if THING_INDEX == 0
-#include "secrets_thing0.h"
+#include "secrets/secrets_thing0.h"
 #else
-#include "secrets_thing1.h"
+#include "secrets/secrets_thing1.h"
 #endif
 
 extern const uint8_t gammaVals[];
@@ -66,12 +69,16 @@ WidgetBridge bridge(VPIN_SEND);
 #define SOFT_POT_MIN 1400
 #define SOFT_POT_MAX 2400
 
-#if THING_INDEX == 0
+#if THING_INDEX == THING_INDEX_MINE
     #define POT_LOW_THRESH 1600
     #define SOFT_POT_MIN 1630
     #define SOFT_POT_MAX 2100
 #else
     #define POT_LOW_THRESH 0
+#endif
+
+#if THING_INDEX == THING_INDEX_MINE
+uint8_t lastPotValue = 0; 
 #endif
 
 void setup() {
@@ -160,7 +167,6 @@ void setup() {
     //     }
     // }
     // if (newCalibration) {
-    //     ////////////////////////////////////// todo tune this
     //     SOFT_POT_MAX -= 200;
     //     SOFT_POT_MIN += 200;
     //     // store new calibration values in eeprom
@@ -191,6 +197,12 @@ void setup() {
 
     // get other device to send color
     bridge.virtualWrite(VPIN_STATUS_SEND, STATUS_REQUEST_COLOR);
+
+    #if THING_INDEX == THING_INDEX_MINE
+    FastLED.setBrightness(255);
+    // so pot doesn't register as changed right at the start regardless of what position it's in
+    lastPotValue = map(analogRead(BRIGHTNESS_POT_PIN), 0, ADC_MAXVAL, 0, 255);
+    #endif
 }
 
 void loop() {
@@ -251,6 +263,8 @@ void setRollingAvg(uint8_t value) {
 }
 
 void readSoftPotTimerEvent() {
+    #if THING_INDEX == THING_INDEX_SARAH
+
     // currentSoftPotHue = readSoftPot();
     uint16_t rawValue = analogRead(POTPIN);
     #ifdef ENABLE_SERIAL
@@ -286,6 +300,25 @@ void readSoftPotTimerEvent() {
     }
 
     updateBrightnessFromPot();
+
+    #else
+
+    // dodgy softpot so use brightness pot instead
+    uint16_t rawValue = analogRead(BRIGHTNESS_POT_PIN);
+    uint8_t mappedValue = map(rawValue, 0, ADC_MAXVAL, 0, 255);
+
+    if ((uint8_t) (mappedValue - lastPotValue) > 2) {
+        int8_t diff = lastPotValue - mappedValue;
+        currentLedHue += diff;
+        targetHue = currentLedHue;
+        #ifdef ENABLE_FASTLED
+        fill_solid(&leds[0], NUMLEDS, CHSV(currentLedHue, 255, 255));
+        FastLED.show();
+        #endif
+        lastPotValue = mappedValue;
+    }
+
+    #endif
 }
 
 #define MIN_BRIGHTNESS 25
